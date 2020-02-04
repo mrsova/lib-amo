@@ -1,5 +1,6 @@
 {
     "name": "pavel/lib-amo",
+    "license": "MIT",
     "authors": [
         {
             "name": "mrsovad",
@@ -8,7 +9,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "/": "libAmo/"
+            "libAmo\\": "/"
         }
     },
     "require": {}
