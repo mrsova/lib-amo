@@ -14,7 +14,6 @@
     },
     "require": {
         "pavel/lib-amo": "dev-master",
-        "php": ">=7.0.0"
     },
     "minimum-stability": "dev",
     "prefer-stable" : true
