@@ -12,9 +12,6 @@
             "libAmo\\": "/"
         }
     },
-    "require": {
-        "pavel/lib-amo": "dev-master"
-    },
     "minimum-stability": "dev",
     "prefer-stable" : true
     
