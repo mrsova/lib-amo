@@ -211,6 +211,8 @@ class Request
         if ($result === false && !empty($error)) {
             throw new Exception($error, $errno);
         }
+        $this->parameters->clearGet();
+        $this->parameters->clearPost();
         return $this->parseResponse($result, $info);
     }
 
