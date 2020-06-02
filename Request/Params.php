@@ -20,6 +20,11 @@ class Params
     private $postParams = [];
 
     /**
+     *
+     */
+    private $pathParams = [];
+
+    /**
      * @var string|null Прокси сервер для отправки запроса
      */
     private $proxy = null;
@@ -133,6 +138,23 @@ class Params
     }
 
     /**
+     * Добавление значений POST параметров
+     *
+     * @param string|array $name Название параметра
+     * @param mixed $value Значение параметра
+     * @return $this
+     */
+    public function addPath($name, $value = null)
+    {
+        if (is_array($name) && $value === null) {
+            $this->pathParams = array_merge($this->pathParams, $name);
+        } else {
+            $this->pathParams[$name] = $value;
+        }
+        return $this;
+    }
+
+    /**
      * Получение POST параметра по ключу или список параметров
      *
      * @param string $name Название параметра
@@ -147,6 +169,20 @@ class Params
     }
 
     /**
+     * Получение POST параметра по ключу или список параметров
+     *
+     * @param string $name Название параметра
+     * @return array|null Значение параметра или список параметров
+     */
+    public function getPath($name = null)
+    {
+        if ($name !== null) {
+            return isset($this->pathParams[$name]) ? $this->pathParams[$name] : null;
+        }
+        return $this->pathParams;
+    }
+
+    /**
      * Получение количества POST параметров
      *
      * @return int количество POST параметров
@@ -157,6 +193,16 @@ class Params
     }
 
     /**
+     * Получение количества PATH параметров
+     *
+     * @return int количество PATH параметров
+     */
+    public function hasPath()
+    {
+        return count($this->pathParams) ? true : false;
+    }
+
+    /**
      * Очистка всех POST параметров
      *
      * @return $this
@@ -164,6 +210,17 @@ class Params
     public function clearPost()
     {
         $this->postParams = [];
+        return $this;
+    }
+
+    /**
+     * Очистка всех POST параметров
+     *
+     * @return $this
+     */
+    public function clearPath()
+    {
+        $this->pathParams = [];
         return $this;
     }
 

@@ -94,7 +94,7 @@ class Request
      * @param array $parameters Список GET параметров
      * @param null|string $modified Значение заголовка IF-MODIFIED-SINCE
      * @return mixed
-     * @throws Exception   
+     * @throws Exception
      */
     public function getRequest($url, $parameters = [], $modified = null)
     {
@@ -116,6 +116,22 @@ class Request
     {
         if (!empty($parameters)) {
             $this->parameters->addPost($parameters);
+        }
+        return $this->request($url);
+    }
+
+    /**
+     * Выполнить HTTP POST запрос и вернуть тело ответа
+     *
+     * @param string $url Запрашиваемый URL
+     * @param array $parameters Список POST параметров
+     * @return mixed
+     * @throws Exception
+     */
+    public function pathRequest($url, $parameters = [])
+    {
+        if (!empty($parameters)) {
+            $this->parameters->addPath($parameters);
         }
         return $this->request($url);
     }
@@ -186,13 +202,18 @@ class Request
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_ENCODING, '');
-        if ($this->parameters->hasPost()) {
+        if ($this->parameters->hasPath()) {
             $fields = json_encode(
-                /*'request' => */$this->parameters->getPost()
+                $this->parameters->getPath()
+            );
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+        } else if($this->parameters->hasPost()) {
+            $fields = json_encode(
+            /*'request' => */$this->parameters->getPost()
             );
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-            $this->printDebug('post params', $fields);
         }
         if ($this->parameters->hasProxy()) {
             curl_setopt($ch, CURLOPT_PROXY, $this->parameters->getProxy());
@@ -213,6 +234,7 @@ class Request
         }
         $this->parameters->clearGet();
         $this->parameters->clearPost();
+        $this->parameters->clearPath();
         return $this->parseResponse($result, $info);
     }
 
@@ -247,7 +269,7 @@ class Request
         }
         return $result['response'];*/
     }
-    
+
     /**
      * Вывода отладочной информации
      *
