@@ -2,7 +2,9 @@
 
 namespace libAmo\Request;
 
-class Params
+use libAmo\ParamsInterface;
+
+class Params implements ParamsInterface
 {
     /**
      * @var array Список значений параметров для авторизации
@@ -22,7 +24,7 @@ class Params
     /**
      *
      */
-    private $pathParams = [];
+    private $patchParams = [];
 
     /**
      * @var string|null Прокси сервер для отправки запроса
@@ -52,6 +54,30 @@ class Params
     public function addAuth($name, $value)
     {
         $this->authParams[$name] = $value;
+        return $this;
+    }
+
+    public function addLogin($value)
+    {
+        $this->authParams['login'] = $value;
+        return $this;
+    }
+
+    public function addDomain($value)
+    {
+        $this->authParams['domain'] = $value;
+        return $this;
+    }
+
+    public function addApiKey($value)
+    {
+        $this->authParams['apiKey'] = $value;
+        return $this;
+    }
+
+    public function addAccessToken($value)
+    {
+        $this->authParams['access_token'] = $value;
         return $this;
     }
 
@@ -144,12 +170,12 @@ class Params
      * @param mixed $value Значение параметра
      * @return $this
      */
-    public function addPath($name, $value = null)
+    public function addPatch($name, $value = null)
     {
         if (is_array($name) && $value === null) {
-            $this->pathParams = array_merge($this->pathParams, $name);
+            $this->patchParams = array_merge($this->patchParams, $name);
         } else {
-            $this->pathParams[$name] = $value;
+            $this->patchParams[$name] = $value;
         }
         return $this;
     }
@@ -174,12 +200,12 @@ class Params
      * @param string $name Название параметра
      * @return array|null Значение параметра или список параметров
      */
-    public function getPath($name = null)
+    public function getPatch($name = null)
     {
         if ($name !== null) {
-            return isset($this->pathParams[$name]) ? $this->pathParams[$name] : null;
+            return isset($this->patchParams[$name]) ? $this->patchParams[$name] : null;
         }
-        return $this->pathParams;
+        return $this->patchParams;
     }
 
     /**
@@ -197,9 +223,9 @@ class Params
      *
      * @return int количество PATH параметров
      */
-    public function hasPath()
+    public function hasPatch()
     {
-        return count($this->pathParams) ? true : false;
+        return count($this->patchParams) ? true : false;
     }
 
     /**
@@ -218,9 +244,9 @@ class Params
      *
      * @return $this
      */
-    public function clearPath()
+    public function clearPatch()
     {
-        $this->pathParams = [];
+        $this->patchParams = [];
         return $this;
     }
 

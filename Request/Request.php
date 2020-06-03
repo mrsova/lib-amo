@@ -8,11 +8,6 @@ use libAmo\Exception;
 class Request
 {
     /**
-     * @var bool Использовать устаревшую схему авторизации
-     */
-    public $v1 = false;
-
-    /**
      * @var bool Флаг вывода отладочной информации
      */
     private $debug = false;
@@ -128,10 +123,10 @@ class Request
      * @return mixed
      * @throws Exception
      */
-    public function pathRequest($url, $parameters = [])
+    public function patchRequest($url, $parameters = [])
     {
         if (!empty($parameters)) {
-            $this->parameters->addPath($parameters);
+            $this->parameters->addPatch($parameters);
         }
         return $this->request($url);
     }
@@ -167,15 +162,12 @@ class Request
      */
     public function prepareEndpoint($url)
     {
-        if ($this->v1 === false) {
-            $query = http_build_query(array_merge($this->parameters->getGet(), [
-                'USER_LOGIN' => $this->parameters->getAuth('login'),
-                'USER_HASH' => $this->parameters->getAuth('apikey'),
-            ]), null, '&');
+        if ($this->parameters->getAuth('access_token')) {
+            $query = http_build_query($this->parameters->getGet(), null, '&');
         } else {
             $query = http_build_query(array_merge($this->parameters->getGet(), [
-                'login' => $this->parameters->getAuth('login'),
-                'api_key' => $this->parameters->getAuth('apikey'),
+                'USER_LOGIN' => $this->parameters->getAuth('login'),
+                'USER_HASH' => $this->parameters->getAuth('apiKey'),
             ]), null, '&');
         }
         return sprintf('https://%s%s?%s', $this->parameters->getAuth('domain'), $url, $query);
@@ -192,9 +184,12 @@ class Request
     public function request($url, $modified = null)
     {
         $headers = $this->prepareHeaders($modified);
+        if ($this->parameters->getAuth('access_token')) {
+            $access_token = $this->parameters->getAuth('access_token');
+            $headers[] = 'Authorization: Bearer ' . $access_token;
+        }
+
         $endpoint = $this->prepareEndpoint($url);
-        $this->printDebug('url', $endpoint);
-        $this->printDebug('headers', $headers);
         $ch = $this->curlHandle->open();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -202,16 +197,12 @@ class Request
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_ENCODING, '');
-        if ($this->parameters->hasPath()) {
-            $fields = json_encode(
-                $this->parameters->getPath()
-            );
+        if ($this->parameters->hasPatch()) {
+            $fields = json_encode($this->parameters->getPatch());
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
             curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
         } else if($this->parameters->hasPost()) {
-            $fields = json_encode(
-            /*'request' => */$this->parameters->getPost()
-            );
+            $fields = json_encode($this->parameters->getPost());
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
         }
@@ -225,16 +216,13 @@ class Request
         $this->curlHandle->close();
         $this->lastHttpCode = $info['http_code'];
         $this->lastHttpResponse = $result;
-        $this->printDebug('curl_exec', $result);
-        $this->printDebug('curl_getinfo', $info);
-        $this->printDebug('curl_error', $error);
-        $this->printDebug('curl_errno', $errno);
         if ($result === false && !empty($error)) {
             throw new Exception($error, $errno);
         }
         $this->parameters->clearGet();
         $this->parameters->clearPost();
-        $this->parameters->clearPath();
+        $this->parameters->clearPatch();
+
         return $this->parseResponse($result, $info);
     }
 
@@ -249,47 +237,5 @@ class Request
     private function parseResponse($response, $info)
     {
         return json_decode($response, true);
-        /*if (floor($info['http_code'] / 100) >= 3) {
-            if (isset($result['response']['error_code']) && $result['response']['error_code'] > 0) {
-                $code = $result['response']['error_code'];
-            } elseif ($result !== null) {
-                $code = 0;
-            } else {
-                $code = $info['http_code'];
-            }
-            if ($this->v1 === false && isset($result['response']['error'])) {
-                throw new Exception($result['response']['error'], $code);
-            } elseif (isset($result['response'])) {
-                throw new Exception(json_encode($result['response']));
-            } else {
-                throw new Exception('Invalid response body.', $code);
-            }
-        } elseif (!isset($result['response'])) {
-            return false;
-        }
-        return $result['response'];*/
-    }
-
-    /**
-     * Вывода отладочной информации
-     *
-     * @param string $key Заголовок отладочной информации
-     * @param mixed $value Значение отладочной информации
-     * @param bool $return Возврат строки вместо вывода
-     * @return mixed
-     */
-    private function printDebug($key = '', $value = null, $return = false)
-    {
-        if ($this->debug !== true) {
-            return false;
-        }
-        if (!is_string($value)) {
-            $value = print_r($value, true);
-        }
-        $line = sprintf('[DEBUG] %s: %s', $key, $value);
-        if ($return === false) {
-            return print_r($line . PHP_EOL);
-        }
-        return $line;
     }
 }

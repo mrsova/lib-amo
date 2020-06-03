@@ -31,30 +31,24 @@ class ClientAmo
     private $curlHandle;
 
     /**
-     * ClientAmo constructor
-     *
-     * @param string $domain Поддомен или домен amoCRM
-     * @param string $login Логин amoCRM
-     * @param string $apikey Ключ пользователя amoCRM
-     * @param string|null $proxy Прокси сервер для отправки запроса
+     * ClientAmo constructor.
+     * @param Params $params
+     * @param null $proxy
      */
-    public function __construct($domain, $login, $apikey, $proxy = null)
+    public function __construct(Params $params, $proxy = null)
     {
-        // Разернуть поддомен в полный домен
-        if (strpos($domain, '.') === false) {
-            $domain = sprintf('%s.amocrm.ru', $domain);
-        }
-        $this->parameters = new Params();
-
-        $this->parameters->addAuth('domain', $domain);
-        $this->parameters->addAuth('login', $login);
-        $this->parameters->addAuth('apikey', $apikey);
-        if ($proxy !== null) {
-            $this->parameters->addProxy($proxy);
-        }
+        $this->parameters = $params;
         $this->curlHandle = new CurlHandle();
-
         $this->request = new Request($this->parameters, $this->curlHandle);
+    }
+
+
+    public static function create(ConnectInterface $connect)
+    {
+        $params = $connect->setParams(new Params());
+        $client = new self($params);
+
+        return $client;
     }
 
     /**
