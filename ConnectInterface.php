@@ -7,5 +7,5 @@ use libAmo\Request\Params;
 
 interface ConnectInterface
 {
-    public function setParams(ParamsInterface $params): Params;
+    public function setParams(ParamsInterface $params): ParamsInterface;
 }
